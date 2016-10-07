@@ -1,0 +1,17 @@
+
+int main()
+{
+
+/* This statement is added later in the chapter to demonstrate tracing.
+  ECPGdebug(1, stderr); 
+*/
+
+  EXEC SQL CONNECT TO test;
+
+  EXEC SQL UPDATE number 
+           SET name = 'The Answer to the Ultimate Question' 
+           WHERE intval = 42;
+  EXEC SQL COMMIT;
+  EXEC SQL DISCONNECT ALL;
+  return 0;
+}

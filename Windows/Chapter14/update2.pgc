@@ -1,0 +1,20 @@
+#include <stdio.h>
+
+exec sql include sqlca;
+
+main()
+{
+  ECPGdebug(1,stderr);
+
+  EXEC SQL connect to bpfinal;
+
+  EXEC SQL UPDATE item 
+           SET cost_price = 1.75, sell_price = 2.99
+           WHERE description = 'Linux CD';
+
+  if(sqlca.sqlcode == 0)
+    printf("rows affected: %d\n", sqlca.sqlerrd[2]);
+  
+  EXEC SQL commit;
+  EXEC SQL disconnect all;
+}

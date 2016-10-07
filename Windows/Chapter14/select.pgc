@@ -1,0 +1,38 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL include sqlca;
+EXEC SQL whenever sqlwarning sqlprint;
+EXEC SQL whenever sqlerror do GiveUp();
+
+void GiveUp()
+{
+	fprintf(stderr, "Fatal Error\n");
+	sqlprint();
+}
+
+main(int argc, char *argv[])
+{
+  EXEC SQL begin declare section;
+  int id;
+  char zip[10];
+  VARCHAR address[64];
+  int address_ind;
+  EXEC SQL end declare section;
+
+  EXEC SQL connect to bpfinal;
+  EXEC SQL select max(customer_id) into :id from customer;
+  printf("we have %d customers\n", id);
+
+  EXEC SQL select addressline, zipcode into :address:address_ind, :zip
+	   from customer
+           where customer_id = :id;
+
+  printf("address is%sNULL\n", address_ind? " ": " not ");
+  printf("customer id: %d\n", id);
+  printf("%.*s <%.*s>\n", sizeof(zip), zip, address.len, address.arr);
+  
+  EXEC SQL disconnect all;
+}
+

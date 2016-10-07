@@ -1,0 +1,63 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL include sqlca;
+EXEC SQL whenever sqlwarning sqlprint;
+EXEC SQL whenever sqlerror do GiveUp();
+
+void GiveUp()
+{
+    fprintf(stderr, "Fatal Error\n");
+    sqlprint();
+    exit(1);
+}
+
+main(int argc, char *argv[])
+{
+  EXEC SQL begin declare section;
+  VARCHAR town[64];
+  int town_ind;
+  double shipping;
+  char date[10];
+
+  EXEC SQL end declare section;
+
+  if(argc != 2) {
+    printf("Usage: cursor town\n");
+    exit(1);
+  }
+
+  town.len = strlen(argv[1]);
+  strncpy(town.arr, argv[1], town.len);
+  town.arr[town.len] = '\0';
+
+// ECPGdebug(1, stderr);
+
+  EXEC SQL connect to bpfinal;
+
+  EXEC SQL declare mycursor cursor for 
+    SELECT oi.date_placed, oi.shipping FROM 
+        customer c, orderinfo oi WHERE
+        c.customer_id = oi.customer_id and c.town = :town;
+
+  EXEC SQL open mycursor;
+
+  EXEC SQL whenever sqlwarning continue;
+  EXEC SQL whenever sqlerror continue;
+  
+  while(sqlca.sqlcode == 0) {
+
+      EXEC SQL fetch from mycursor into :date, :shipping;
+             
+      if (sqlca.sqlcode == 0) {
+          printf("%.*s <%.2f>\n", sizeof(date), date, shipping);
+      }
+  }
+
+  EXEC SQL whenever sqlwarning sqlprint;
+  EXEC SQL whenever sqlerror do GiveUp();
+
+  EXEC SQL close mycursor;
+  EXEC SQL disconnect all;
+}

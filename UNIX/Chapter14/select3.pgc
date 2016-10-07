@@ -1,0 +1,56 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+exec sql include sqlca;
+exec sql whenever sqlwarning sqlprint;
+exec sql whenever sqlerror do GiveUp();
+
+void GiveUp()
+{
+	fprintf(stderr, "Fatal Error\n");
+	sqlprint();
+	exit(1);
+}
+
+main(int argc, char *argv[])
+{
+  exec sql begin declare section;
+  int id;
+  char title[4];
+  int title_ind;
+  char zip[10];
+  VARCHAR lname[32];
+  VARCHAR town[64];
+  int town_ind;
+  exec sql end declare section;
+
+  if(argc != 2) {
+	printf("Usage: select zipcode\n");
+	exit(1);
+  }
+
+  strncpy(zip, argv[1], sizeof(zip));
+
+  exec sql connect to bpfinal;
+
+  exec sql whenever not found do break;
+
+  do { 
+    exec sql select customer_id, title, lname, town
+      into :id, :title:title_ind, :lname, :town:town_ind
+      from customer
+      where zipcode = :zip;
+
+    printf("title is%sNULL\n", title_ind? " ": " not ");	
+    printf("town is%sNULL\n", town_ind? " ": " not ");
+    printf("customer id: %d\n", id);
+    printf("%.*s %.*s <%.*s>\n", 
+	   sizeof(title), title, 
+	   lname.len, lname.arr,
+	   town.len, town.arr);
+  } while(0);
+
+  exec sql disconnect all;
+}
+

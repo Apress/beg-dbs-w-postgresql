@@ -1,0 +1,41 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL include sqlca;
+EXEC SQL whenever sqlwarning sqlprint;
+EXEC SQL whenever sqlerror do GiveUp();
+
+void GiveUp()
+{
+	fprintf(stderr, "Fatal Error\n");
+	sqlprint();
+}
+
+main(int argc, char *argv[])
+{
+  EXEC SQL begin declare section;
+  char dbname[] = "bpfinal";
+  double cost_price, sell_price;
+  VARCHAR description[64];
+  EXEC SQL end declare section;
+
+  if(argc != 4) {
+    printf("usage: insert description cost_price sell_price\n");
+    exit(1);
+  }
+
+  strncpy(description.arr, argv[1], sizeof(description.arr));
+  description.len = strlen(description.arr);
+  cost_price = atof(argv[2]);
+  sell_price = atof(argv[3]);
+
+  EXEC SQL connect to :dbname as bpfinal;
+  EXEC SQL BEGIN;
+  EXEC SQL at bpfinal insert into 
+    item(description, cost_price, sell_price)
+    values(:description, :cost_price, :sell_price);
+  EXEC SQL COMMIT;
+  EXEC SQL disconnect bpfinal;
+}
+

@@ -1,0 +1,37 @@
+#include <stdio.h>
+#include <string.h>
+
+EXEC SQL include sqlca;
+EXEC SQL whenever sqlwarning sqlprint;
+EXEC SQL whenever sqlerror do GiveUp();
+
+void GiveUp()
+{
+	fprintf(stderr, "Fatal Error\n");
+	sqlprint();
+}
+
+main(int argc, char *argv[])
+{
+  EXEC SQL begin declare section;
+  int item_id;
+  char barcode[13];
+  EXEC SQL end declare section;
+
+// ECPGdebug(1, stderr); uncomment if you want to see some debug information
+
+  if(argc != 3) {
+    printf("usage: insert item barcode\n");
+    exit(1);
+  }
+
+  item_id = atoi(argv[1]);
+  strncpy(barcode, argv[2], sizeof(barcode));
+
+  EXEC SQL CONNECT TO bpfinal;
+  EXEC SQL BEGIN;
+  EXEC SQL INSERT INTO barcode VALUES(:barcode, :item_id);
+  EXEC SQL COMMIT;
+  EXEC SQL DISCONNECT ALL;
+}
+
